@@ -7,7 +7,7 @@
 ### Installation
 
 ```sh
-pip install gradcam
+pip install pytorch-gradcam
 ```
 
 ### Supported torchvision models
