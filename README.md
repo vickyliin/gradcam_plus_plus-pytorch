@@ -4,6 +4,12 @@
 <img src=assets/readme.png>
 </p>
 
+### Installation
+
+```sh
+pip install gradcam
+```
+
 ### Supported torchvision models
 - alexnet
 - vgg
