@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 
-from utils import find_alexnet_layer, find_vgg_layer, find_resnet_layer, find_densenet_layer, find_squeezenet_layer
+from .utils import find_alexnet_layer, find_vgg_layer, find_resnet_layer, find_densenet_layer, find_squeezenet_layer
 
 
 class GradCAM(object):
@@ -155,8 +155,8 @@ class GradCAMpp(GradCAM):
         if class_idx is None:
             score = logit[:, logit.max(1)[-1]].squeeze()
         else:
-            score = logit[:, class_idx].squeeze() 
-            
+            score = logit[:, class_idx].squeeze()
+
         self.model_arch.zero_grad()
         score.backward(retain_graph=retain_graph)
         gradients = self.gradients['value'] # dS/dA
