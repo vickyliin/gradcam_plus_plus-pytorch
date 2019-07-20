@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 
-from .utils import find_alexnet_layer, find_vgg_layer, find_resnet_layer, find_densenet_layer, find_squeezenet_layer
+from .utils import layer_finders
 
 
 class GradCAM(object):
@@ -12,8 +12,7 @@ class GradCAM(object):
         # initialize a model, model_dict and gradcam
         resnet = torchvision.models.resnet101(pretrained=True)
         resnet.eval()
-        model_dict = dict(model_type='resnet', arch=resnet, layer_name='layer4', input_size=(224, 224))
-        gradcam = GradCAM(model_dict)
+        gradcam = GradCAM.from_config(model_type='resnet', arch=resnet, layer_name='layer4')
 
         # get an image and normalize with mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)
         img = load_img()
@@ -24,51 +23,30 @@ class GradCAM(object):
 
         # make heatmap from mask and synthesize saliency map using heatmap and img
         heatmap, cam_result = visualize_cam(mask, img)
-
-
-    Args:
-        model_dict (dict): a dictionary that contains 'model_type', 'arch', layer_name', 'input_size'(optional) as keys.
-        verbose (bool): whether to print output size of the saliency map givien 'layer_name' and 'input_size' in model_dict.
     """
-    def __init__(self, model_dict, verbose=False):
-        model_type = model_dict['type']
-        layer_name = model_dict['layer_name']
-        self.model_arch = model_dict['arch']
+
+    def __init__(self, arch: torch.nn.Module, target_layer: torch.nn.Module):
+        self.model_arch = arch
 
         self.gradients = dict()
         self.activations = dict()
         def backward_hook(module, grad_input, grad_output):
             self.gradients['value'] = grad_output[0]
-            return None
         def forward_hook(module, input, output):
             self.activations['value'] = output
-            return None
-
-        if 'vgg' in model_type.lower():
-            target_layer = find_vgg_layer(self.model_arch, layer_name)
-        elif 'resnet' in model_type.lower():
-            target_layer = find_resnet_layer(self.model_arch, layer_name)
-        elif 'densenet' in model_type.lower():
-            target_layer = find_densenet_layer(self.model_arch, layer_name)
-        elif 'alexnet' in model_type.lower():
-            target_layer = find_alexnet_layer(self.model_arch, layer_name)
-        elif 'squeezenet' in model_type.lower():
-            target_layer = find_squeezenet_layer(self.model_arch, layer_name)
 
         target_layer.register_forward_hook(forward_hook)
         target_layer.register_backward_hook(backward_hook)
 
-        if verbose:
-            try:
-                input_size = model_dict['input_size']
-            except KeyError:
-                print("please specify size of input image in model_dict. e.g. {'input_size':(224, 224)}")
-                pass
-            else:
-                device = 'cuda' if next(self.model_arch.parameters()).is_cuda else 'cpu'
-                self.model_arch(torch.zeros(1, 3, *(input_size), device=device))
-                print('saliency_map size :', self.activations['value'].shape[2:])
+    @classmethod
+    def from_config(cls, arch: torch.nn.Module, model_type: str, layer_name: str):
+        target_layer = layer_finders[model_type](arch, layer_name)
+        return cls(arch, target_layer)
 
+    def saliency_map_size(self, *input_size):
+        device = next(self.model_arch.parameters()).device
+        self.model_arch(torch.zeros(1, 3, *input_size, device=device))
+        return self.activations['value'].shape[2:]
 
     def forward(self, input, class_idx=None, retain_graph=False):
         """
@@ -118,8 +96,7 @@ class GradCAMpp(GradCAM):
         # initialize a model, model_dict and gradcampp
         resnet = torchvision.models.resnet101(pretrained=True)
         resnet.eval()
-        model_dict = dict(model_type='resnet', arch=resnet, layer_name='layer4', input_size=(224, 224))
-        gradcampp = GradCAMpp(model_dict)
+        gradcampp = GradCAMpp.from_config(model_type='resnet', arch=resnet, layer_name='layer4')
 
         # get an image and normalize with mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)
         img = load_img()
@@ -130,14 +107,7 @@ class GradCAMpp(GradCAM):
 
         # make heatmap from mask and synthesize saliency map using heatmap and img
         heatmap, cam_result = visualize_cam(mask, img)
-
-
-    Args:
-        model_dict (dict): a dictionary that contains 'model_type', 'arch', layer_name', 'input_size'(optional) as keys.
-        verbose (bool): whether to print output size of the saliency map givien 'layer_name' and 'input_size' in model_dict.
     """
-    def __init__(self, model_dict, verbose=False):
-        super(GradCAMpp, self).__init__(model_dict, verbose)
 
     def forward(self, input, class_idx=None, retain_graph=False):
         """

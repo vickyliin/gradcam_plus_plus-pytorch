@@ -2,6 +2,16 @@ import cv2
 import numpy as np
 import torch
 
+layer_finders = {}
+
+
+def register_layer_finder(model_type):
+    def register(func):
+        layer_finders[model_type] = func
+        return func
+    return register
+
+
 def visualize_cam(mask, img):
     """Make heatmap from mask and synthesize GradCAM result image using heatmap and img.
     Args:
@@ -24,6 +34,7 @@ def visualize_cam(mask, img):
     return heatmap, result
 
 
+@register_layer_finder('resnet')
 def find_resnet_layer(arch, target_layer_name):
     """Find resnet layer to calculate GradCAM and GradCAM++
 
@@ -74,6 +85,7 @@ def find_resnet_layer(arch, target_layer_name):
     return target_layer
 
 
+@register_layer_finder('densenet')
 def find_densenet_layer(arch, target_layer_name):
     """Find densenet layer to calculate GradCAM and GradCAM++
 
@@ -107,6 +119,7 @@ def find_densenet_layer(arch, target_layer_name):
     return target_layer
 
 
+@register_layer_finder('vgg')
 def find_vgg_layer(arch, target_layer_name):
     """Find vgg layer to calculate GradCAM and GradCAM++
 
@@ -132,6 +145,7 @@ def find_vgg_layer(arch, target_layer_name):
     return target_layer
 
 
+@register_layer_finder('alexnet')
 def find_alexnet_layer(arch, target_layer_name):
     """Find alexnet layer to calculate GradCAM and GradCAM++
 
@@ -157,6 +171,7 @@ def find_alexnet_layer(arch, target_layer_name):
     return target_layer
 
 
+@register_layer_finder('squeezenet')
 def find_squeezenet_layer(arch, target_layer_name):
     """Find squeezenet layer to calculate GradCAM and GradCAM++
 
