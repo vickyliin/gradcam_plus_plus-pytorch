@@ -12,7 +12,7 @@ def register_layer_finder(model_type):
     return register
 
 
-def visualize_cam(mask, img):
+def visualize_cam(mask, img, alpha=1.0):
     """Make heatmap from mask and synthesize GradCAM result image using heatmap and img.
     Args:
         mask (torch.tensor): mask shape of (1, 1, H, W) and each element has value in range [0, 1]
@@ -26,7 +26,7 @@ def visualize_cam(mask, img):
     heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
     heatmap = torch.from_numpy(heatmap).permute(2, 0, 1).float().div(255)
     b, g, r = heatmap.split(1)
-    heatmap = torch.cat([r, g, b])
+    heatmap = torch.cat([r, g, b]) * alpha
 
     result = heatmap+img.cpu()
     result = result.div(result.max()).squeeze()
