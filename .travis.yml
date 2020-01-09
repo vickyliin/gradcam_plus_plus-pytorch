@@ -1,10 +1,10 @@
 language: python
 
 install:
-  - echo peace
+  - pip install flake8
 
 script:
-  - echo peace
+  - flake8 gradcam
 
 deploy:
   provider: pypi
