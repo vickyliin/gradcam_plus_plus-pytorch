@@ -30,8 +30,10 @@ class GradCAM(object):
 
         self.gradients = dict()
         self.activations = dict()
+
         def backward_hook(module, grad_input, grad_output):
             self.gradients['value'] = grad_output[0]
+
         def forward_hook(module, input, output):
             self.activations['value'] = output
 
@@ -73,7 +75,7 @@ class GradCAM(object):
         b, k, u, v = gradients.size()
 
         alpha = gradients.view(b, k, -1).mean(2)
-        #alpha = F.relu(gradients.view(b, k, -1)).mean(2)
+        # alpha = F.relu(gradients.view(b, k, -1)).mean(2)
         weights = alpha.view(b, k, 1, 1)
 
         saliency_map = (weights*activations).sum(1, keepdim=True)
@@ -90,6 +92,15 @@ class GradCAM(object):
 
 class GradCAMpp(GradCAM):
     """Calculate GradCAM++ salinecy map.
+
+    Args:
+        input: input image with shape of (1, 3, H, W)
+        class_idx (int): class index for calculating GradCAM.
+                If not specified, the class index that makes the highest model prediction score will be used.
+    Return:
+        mask: saliency map of the same spatial dimension with input
+        logit: model output
+
 
     A simple example:
 
@@ -110,15 +121,6 @@ class GradCAMpp(GradCAM):
     """
 
     def forward(self, input, class_idx=None, retain_graph=False):
-        """
-        Args:
-            input: input image with shape of (1, 3, H, W)
-            class_idx (int): class index for calculating GradCAM.
-                    If not specified, the class index that makes the highest model prediction score will be used.
-        Return:
-            mask: saliency map of the same spatial dimension with input
-            logit: model output
-        """
         b, c, h, w = input.size()
 
         logit = self.model_arch(input)
@@ -129,17 +131,16 @@ class GradCAMpp(GradCAM):
 
         self.model_arch.zero_grad()
         score.backward(retain_graph=retain_graph)
-        gradients = self.gradients['value'] # dS/dA
-        activations = self.activations['value'] # A
+        gradients = self.gradients['value']  # dS/dA
+        activations = self.activations['value']  # A
         b, k, u, v = gradients.size()
 
         alpha_num = gradients.pow(2)
-        alpha_denom = gradients.pow(2).mul(2) + \
-                activations.mul(gradients.pow(3)).view(b, k, u*v).sum(-1, keepdim=True).view(b, k, 1, 1)
+        alpha_denom = alpha_num.mul(2) + activations.mul(gradients.pow(3)).view(b, k, u*v).sum(-1).view(b, k, 1, 1)
         alpha_denom = torch.where(alpha_denom != 0.0, alpha_denom, torch.ones_like(alpha_denom))
 
         alpha = alpha_num.div(alpha_denom+1e-7)
-        positive_gradients = F.relu(score.exp()*gradients) # ReLU(dY/dA) == ReLU(exp(S)*dS/dA))
+        positive_gradients = F.relu(score.exp()*gradients)  # ReLU(dY/dA) == ReLU(exp(S)*dS/dA))
         weights = (alpha*positive_gradients).view(b, k, u*v).sum(-1).view(b, k, 1, 1)
 
         saliency_map = (weights*activations).sum(1, keepdim=True)
