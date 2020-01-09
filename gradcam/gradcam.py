@@ -4,8 +4,17 @@ import torch.nn.functional as F
 from .utils import layer_finders
 
 
-class GradCAM(object):
+class GradCAM:
     """Calculate GradCAM salinecy map.
+
+    Args:
+        input: input image with shape of (1, 3, H, W)
+        class_idx (int): class index for calculating GradCAM.
+                If not specified, the class index that makes the highest model prediction score will be used.
+    Return:
+        mask: saliency map of the same spatial dimension with input
+        logit: model output
+
 
     A simple example:
 
@@ -51,15 +60,6 @@ class GradCAM(object):
         return self.activations['value'].shape[2:]
 
     def forward(self, input, class_idx=None, retain_graph=False):
-        """
-        Args:
-            input: input image with shape of (1, 3, H, W)
-            class_idx (int): class index for calculating GradCAM.
-                    If not specified, the class index that makes the highest model prediction score will be used.
-        Return:
-            mask: saliency map of the same spatial dimension with input
-            logit: model output
-        """
         b, c, h, w = input.size()
 
         logit = self.model_arch(input)
