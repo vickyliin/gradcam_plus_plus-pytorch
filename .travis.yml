@@ -1,0 +1,15 @@
+language: python
+
+install:
+  - echo peace
+
+script:
+  - echo peace
+
+deploy:
+  provider: pypi
+  user: __token__
+  password:
+    secure: gc23mdLSDilSyGogbBWZFHbsR/pg0+rEgfYyphItRYc14bZ5021eYs5uJSDPA2m03hx7GIfDG1+siPGrY49VP1YsOYIRzhx5oXDQwjUFKYXB3Cpi2ps7jyCAz+NusQxtvH1Dbg59R4x7sxU6c44dP5R0XKUnOOIvJupuaFcrBM1rW/gUfgnqbuN8z4vRRYaDISJG6MGkTA+U0y9KjxdDFVVI/psP1yOZyTvCVQiVi0cC28j3QTS9PV91wh96Hc8zwHgGnPFWyw0hHJVy1wbqmzDHvSQMDyfpk/mlHUYr+wEngXix9VB5MvVbAm7zpM5rhG+wHLRoiRt8I6vW2hh65QTZjXQqjIKaUlsSkRS/QO8rgh8mVYzW3A4Q6fzsA9sCc2t8sVaPMfiLnPsJtSMwTjUNca57adS0KIsQ2ozm2VhE1Er7dtHNazGq0BUrjIfGcB9AK+cjj3Tgb7I3VOeim0jLVgxvCBdniX6xfdlqwLm6nW+Suuj6nqRIufO1fDRRUr5/xicla0QUTd7FHOdBeLQrcatgFuzowf2Vg0zriUs58X4yDp4MSSsUnHeEnrNzGW7qrBaUSl7+ENE3z5xC+tHfRGSBQ87Gk75KZmTCFB36pNXuUbLhK8KRenYLO7lOlzc+7ugKNPgVd2WtfX5YS71fDomOVgWx2CgxTNfQ11A=
+  on:
+    tags: true
