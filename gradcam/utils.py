@@ -21,15 +21,9 @@ def visualize_cam(mask, img, alpha=1.0):
         heatmap (torch.tensor): heatmap img shape of (3, H, W)
         result (torch.tensor): synthesized GradCAM result of same shape with heatmap.
     """
-    heatmap = (255 * mask.squeeze()).type(torch.uint8).cpu().numpy()
+    heatmap = (255*mask.squeeze()).cpu().numpy().astype(np.uint8) 
     heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-    heatmap = torch.from_numpy(heatmap).permute(2, 0, 1).float().div(255)
-    b, g, r = heatmap.split(1)
-    heatmap = torch.cat([r, g, b]) * alpha
-
-    result = heatmap+img.cpu()
-    result = result.div(result.max()).squeeze()
-
+    result = cv2.addWeighted(image, (1.0-alpha), heatmap, alpha, 0.0)
     return heatmap, result
 
 
